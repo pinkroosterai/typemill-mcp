@@ -109,23 +109,44 @@ Starts an HTTP+SSE server on port 8000.
 
 ## Available Tools
 
+### Site Structure
 | Tool | Parameters | Description |
 |---|---|---|
 | `explore_site` | — | Formatted site tree with page statuses and hierarchy |
-| `rename_page` | `url_path`, `new_name` | Rename a page (title and URL slug) |
+| `rename_page` | `url_path`, `item_id`, `new_name` | Rename a page (title and URL slug) |
 | `sort_page` | `url_path`, `item_id`, `parent_id`, `position` | Move a page in the navigation tree |
+
+### Pages
+| Tool | Parameters | Description |
+|---|---|---|
 | `get_page` | `url_path` | Retrieve markdown blocks + metadata in one response |
-| `create_page` | `url_path`, `title`, `content` | Create a new page |
-| `delete_page` | `url_path` | Delete a page (irreversible) |
-| `add_block` | `url_path`, `block_id`, `content` | Insert a content block at a position |
+| `create_page` | `folder_id`, `item_name`, `item_type?` | Create a new page (`folder_id` is `"root"` or a key path) |
+| `delete_page` | `url_path`, `item_id` | Delete a page (irreversible) |
+
+### Content Blocks
+| Tool | Parameters | Description |
+|---|---|---|
+| `add_block` | `url_path`, `block_id`, `content` | Insert a markdown block at a position |
 | `update_block` | `url_path`, `block_id`, `content` | Edit a specific content block |
 | `delete_block` | `url_path`, `block_id` | Remove a content block |
 | `move_block` | `url_path`, `block_id`, `new_position` | Reorder a content block |
-| `publish_page` | `url_path` | Publish a page to make it publicly visible |
-| `unpublish_page` | `url_path` | Revert a page to draft state |
-| `discard_changes` | `url_path` | Discard unpublished edits (irreversible) |
+
+### Page Lifecycle
+| Tool | Parameters | Description |
+|---|---|---|
+| `publish_page` | `url_path`, `item_id` | Publish a page to make it publicly visible |
+| `unpublish_page` | `url_path`, `item_id` | Revert a page to draft state |
+| `discard_changes` | `url_path`, `item_id` | Discard unpublished edits (irreversible) |
+
+### Metadata
+| Tool | Parameters | Description |
+|---|---|---|
 | `get_meta` | `url_path` | Retrieve page metadata |
 | `update_meta` | `url_path`, `title?`, `description?`, `noindex?` | Update page metadata |
+
+### Media
+| Tool | Parameters | Description |
+|---|---|---|
 | `manage_media` | `action`, `name?`, `file?` | Unified media tool (browse/get/upload/publish/delete images and files) |
 
 ## Development
