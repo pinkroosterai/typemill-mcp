@@ -1,8 +1,11 @@
 import json
-from typing import Any
+from typing import Annotated, Any
 
+from pydantic import Field
 from mcp.server.fastmcp import FastMCP
 from typemill_mcp.client import TypemillClient
+
+ItemId = Annotated[str, Field(description="The keyPath from the navigation tree (e.g. '0', '0.1', '2.3'). Get this from explore_site, NOT from page metadata. It is NOT the pageid hex hash.")]
 
 
 def _format_tree(items: list[dict[str, Any]], indent: int = 0) -> str:
@@ -13,7 +16,8 @@ def _format_tree(items: list[dict[str, Any]], indent: int = 0) -> str:
         marker = "[P]" if status == "published" else "[D]"
         name = item.get("name", "Untitled")
         url = item.get("urlRel", "")
-        lines.append(f"{prefix}{marker} {name}  {url}")
+        key_path = item.get("keyPath", "?")
+        lines.append(f"{prefix}{marker} {name}  {url}  (keyPath: {key_path})")
         children = item.get("folderContent", [])
         if isinstance(children, dict):
             children = list(children.values())
@@ -33,13 +37,13 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
         return _format_tree(items)
 
     @mcp.tool()
-    async def rename_page(url_path: str, item_id: str, new_name: str) -> str:
-        """Rename a Typemill page, changing its title and URL slug. url_path is the current relative URL, item_id is from the navigation tree, new_name is the desired new name."""
+    async def rename_page(url_path: str, item_id: ItemId, new_name: str) -> str:
+        """Rename a Typemill page, changing its title and URL slug. url_path is the current relative URL, new_name is the desired new slug."""
         result = await client.rename_article(url_path, item_id, new_name)
         return json.dumps(result, indent=2)
 
     @mcp.tool()
-    async def sort_page(url_path: str, item_id: str, parent_id: str, position: int) -> str:
-        """Move a Typemill page to a new position in the navigation tree. url_path identifies the page, item_id is the page's item ID, parent_id is the target parent folder ID, and position is the 0-based target index within that folder."""
+    async def sort_page(url_path: str, item_id: ItemId, parent_id: str, position: int) -> str:
+        """Move a Typemill page to a new position in the navigation tree. url_path identifies the page, parent_id is the target parent's keyPath, and position is the 0-based target index within that folder."""
         result = await client.sort_article(url_path, item_id, parent_id, position)
         return json.dumps(result, indent=2)
