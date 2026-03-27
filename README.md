@@ -44,8 +44,8 @@ No install needed — run directly from source with `uv run`:
 
 ```bash
 claude mcp add --transport stdio \
-  --env TYPEMILL_BASE_URL=https://your-typemill-site.com \
-  --env TYPEMILL_USERNAME=your_api_username \
+  -e TYPEMILL_BASE_URL=https://your-typemill-site.com \
+  -e TYPEMILL_USERNAME=your_api_username \
   --env TYPEMILL_PASSWORD=your_api_password \
   typemill -- uv run --directory /path/to/typemill-mcp typemill-mcp
 ```
@@ -54,8 +54,8 @@ Or use `uvx` to run from the git repo without cloning:
 
 ```bash
 claude mcp add --transport stdio \
-  --env TYPEMILL_BASE_URL=https://your-typemill-site.com \
-  --env TYPEMILL_USERNAME=your_api_username \
+  -e TYPEMILL_BASE_URL=https://your-typemill-site.com \
+  -e TYPEMILL_USERNAME=your_api_username \
   --env TYPEMILL_PASSWORD=your_api_password \
   typemill -- uvx --from git+https://github.com/pinkroosterai/typemill-mcp.git typemill-mcp
 ```
@@ -67,8 +67,8 @@ pipx install /path/to/typemill-mcp        # from local source
 pipx install git+https://github.com/pinkroosterai/typemill-mcp.git  # from git
 
 claude mcp add --transport stdio \
-  --env TYPEMILL_BASE_URL=https://your-typemill-site.com \
-  --env TYPEMILL_USERNAME=your_api_username \
+  -e TYPEMILL_BASE_URL=https://your-typemill-site.com \
+  -e TYPEMILL_USERNAME=your_api_username \
   --env TYPEMILL_PASSWORD=your_api_password \
   typemill -- typemill-mcp
 ```
@@ -77,8 +77,8 @@ Use `--scope user` to make it available across all projects, or `--scope project
 
 ```bash
 claude mcp add --scope user --transport stdio \
-  --env TYPEMILL_BASE_URL=https://your-typemill-site.com \
-  --env TYPEMILL_USERNAME=your_api_username \
+  -e TYPEMILL_BASE_URL=https://your-typemill-site.com \
+  -e TYPEMILL_USERNAME=your_api_username \
   --env TYPEMILL_PASSWORD=your_api_password \
   typemill -- uv run --directory /path/to/typemill-mcp typemill-mcp
 ```
