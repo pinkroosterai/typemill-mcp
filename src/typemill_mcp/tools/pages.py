@@ -1,23 +1,21 @@
 import asyncio
 import json
-from typing import Annotated
 
 from pydantic import BaseModel, Field
 from mcp.server.fastmcp import FastMCP
 from typemill_mcp.client import TypemillClient
-
-ItemId = Annotated[str, Field(description="The keyPath from the navigation tree (e.g. '0', '0.1', '2.3'). Get this from explore_site, NOT from page metadata. It is NOT the pageid hex hash.")]
+from typemill_mcp.tools.types import ItemId, UrlPath
 
 
 class ContentBlock(BaseModel):
     """A single content block on a Typemill page."""
-    markdown: str = Field(description="The markdown text for this block, e.g. '# Hello World' or 'A paragraph of text.'")
+    markdown: str = Field(description="Markdown text for this block (e.g. 'A paragraph.' or '* Item one\\n* Item two').")
 
 
 def register(mcp: FastMCP, client: TypemillClient) -> None:
     @mcp.tool()
-    async def get_page(url_path: str) -> str:
-        """Retrieve the full content and metadata of a Typemill page by its URL path (e.g. '/getting-started'). Returns both the markdown content blocks and page metadata in a single response."""
+    async def get_page(url_path: UrlPath) -> str:
+        """Get the full content blocks and metadata of a page. Returns partial results if one API call fails (e.g. content missing for unpublished pages)."""
         results = await asyncio.gather(
             client.get_article_content(url_path),
             client.get_article_meta(url_path),
@@ -41,21 +39,30 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
         return json.dumps(combined, indent=2)
 
     @mcp.tool()
-    async def create_page(folder_id: str, item_name: str, item_type: str = "file") -> str:
-        """Create a new page in Typemill. folder_id is 'root' for top-level or a key path like '0' for the first folder. item_name is the page slug (e.g. 'my-new-page'). item_type is 'file' for a page or 'folder' for a section."""
+    async def create_page(
+        folder_id: str = Field(description="Parent location: 'root' for top-level, or a keyPath like '0' for the first folder."),
+        item_name: str = Field(description="URL slug for the new page (e.g. 'my-new-page'). Lowercase, hyphens only."),
+        item_type: str = Field(default="file", description="'file' for a page, 'folder' for a section that can contain sub-pages."),
+    ) -> str:
+        """Create a new empty page or folder. The page has no content until you call update_page."""
         result = await client.create_article(folder_id, item_name, item_type)
         return json.dumps(result, indent=2)
 
     @mcp.tool()
-    async def update_page(url_path: str, item_id: ItemId, title: str, blocks: list[ContentBlock]) -> str:
-        """Replace the full draft content of a Typemill page. Use this to set initial content on newly created (empty) pages, or to replace all content at once. title is the page heading (without '# ' — it is added automatically). Each block is a separate content element (paragraph, list, code block, etc.). Do NOT include the title as a block."""
+    async def update_page(
+        url_path: UrlPath,
+        item_id: ItemId,
+        title: str = Field(description="Page title text (e.g. 'Welcome to Clarive'). The '# ' heading prefix is added automatically."),
+        blocks: list[ContentBlock] = Field(description="Content blocks below the title. Each block is a separate paragraph, list, code block, etc. Do NOT include the title as a block."),
+    ) -> str:
+        """Replace the full draft content of a page. Use after create_page to set initial content, or to overwrite all content at once."""
         heading = "# " + title
         body = "\n\n".join(b.markdown for b in blocks)
         result = await client.update_draft(url_path, item_id, heading, body)
         return json.dumps(result, indent=2)
 
     @mcp.tool()
-    async def delete_page(url_path: str, item_id: ItemId) -> str:
-        """Delete a Typemill page by its URL path and item_id. This action is irreversible — the page and its content will be permanently removed."""
+    async def delete_page(url_path: UrlPath, item_id: ItemId) -> str:
+        """Permanently delete a page and its content. This action is irreversible."""
         result = await client.delete_article(url_path, item_id)
         return json.dumps(result, indent=2)
