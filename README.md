@@ -40,9 +40,32 @@ cp .env.example .env
 
 ### Claude Code (CLI)
 
-Add the server with a single command:
+No install needed — run directly from source with `uv run`:
 
 ```bash
+claude mcp add --transport stdio \
+  --env TYPEMILL_BASE_URL=https://your-typemill-site.com \
+  --env TYPEMILL_USERNAME=your_api_username \
+  --env TYPEMILL_PASSWORD=your_api_password \
+  typemill -- uv run --directory /path/to/typemill-mcp typemill-mcp
+```
+
+Or use `uvx` to run from the git repo without cloning:
+
+```bash
+claude mcp add --transport stdio \
+  --env TYPEMILL_BASE_URL=https://your-typemill-site.com \
+  --env TYPEMILL_USERNAME=your_api_username \
+  --env TYPEMILL_PASSWORD=your_api_password \
+  typemill -- uvx --from git+https://github.com/pinkroosterai/typemill-mcp.git typemill-mcp
+```
+
+If you prefer a permanent install, use `pipx`:
+
+```bash
+pipx install /path/to/typemill-mcp        # from local source
+pipx install git+https://github.com/pinkroosterai/typemill-mcp.git  # from git
+
 claude mcp add --transport stdio \
   --env TYPEMILL_BASE_URL=https://your-typemill-site.com \
   --env TYPEMILL_USERNAME=your_api_username \
@@ -50,19 +73,14 @@ claude mcp add --transport stdio \
   typemill -- typemill-mcp
 ```
 
-This registers the server for your current project. Use `--scope user` to make it available across all projects, or `--scope project` to share it with your team via `.mcp.json`:
+Use `--scope user` to make it available across all projects, or `--scope project` to share via `.mcp.json`:
 
 ```bash
-# Available across all your projects
 claude mcp add --scope user --transport stdio \
   --env TYPEMILL_BASE_URL=https://your-typemill-site.com \
   --env TYPEMILL_USERNAME=your_api_username \
   --env TYPEMILL_PASSWORD=your_api_password \
-  typemill -- typemill-mcp
-
-# Shared with team (committed to .mcp.json)
-claude mcp add --scope project --transport stdio \
-  typemill -- typemill-mcp
+  typemill -- uv run --directory /path/to/typemill-mcp typemill-mcp
 ```
 
 Verify it's running:
@@ -76,13 +94,14 @@ Inside Claude Code, use `/mcp` to check server status and available tools.
 
 ### Claude Desktop
 
-Add to `claude_desktop_config.json`:
+Add to `claude_desktop_config.json`. Use `uv run` to avoid a global install:
 
 ```json
 {
   "mcpServers": {
     "typemill": {
-      "command": "typemill-mcp",
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/typemill-mcp", "typemill-mcp"],
       "env": {
         "TYPEMILL_BASE_URL": "https://your-typemill-site.com",
         "TYPEMILL_USERNAME": "your_api_username",
@@ -96,13 +115,13 @@ Add to `claude_desktop_config.json`:
 ### stdio (direct)
 
 ```bash
-typemill-mcp
+uv run --directory /path/to/typemill-mcp typemill-mcp
 ```
 
 ### SSE (remote deployment)
 
 ```bash
-typemill-mcp --transport sse
+uv run --directory /path/to/typemill-mcp typemill-mcp --transport sse
 ```
 
 Starts an HTTP+SSE server on port 8000.
