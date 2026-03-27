@@ -40,24 +40,34 @@ cp .env.example .env
 
 ### Claude Code (CLI)
 
-No install needed — run directly from source with `uv run`:
+No install needed — run directly from source with `uv run`. Use `add-json` for reliable env var handling:
 
 ```bash
-claude mcp add --transport stdio \
-  -e TYPEMILL_BASE_URL=https://your-typemill-site.com \
-  -e TYPEMILL_USERNAME=your_api_username \
-  --env TYPEMILL_PASSWORD=your_api_password \
-  typemill -- uv run --directory /path/to/typemill-mcp typemill-mcp
+claude mcp add-json typemill '{
+  "type": "stdio",
+  "command": "uv",
+  "args": ["run", "--directory", "/path/to/typemill-mcp", "typemill-mcp"],
+  "env": {
+    "TYPEMILL_BASE_URL": "https://your-typemill-site.com",
+    "TYPEMILL_USERNAME": "your_api_username",
+    "TYPEMILL_PASSWORD": "your_api_password"
+  }
+}'
 ```
 
 Or use `uvx` to run from the git repo without cloning:
 
 ```bash
-claude mcp add --transport stdio \
-  -e TYPEMILL_BASE_URL=https://your-typemill-site.com \
-  -e TYPEMILL_USERNAME=your_api_username \
-  --env TYPEMILL_PASSWORD=your_api_password \
-  typemill -- uvx --from git+https://github.com/pinkroosterai/typemill-mcp.git typemill-mcp
+claude mcp add-json typemill '{
+  "type": "stdio",
+  "command": "uvx",
+  "args": ["--from", "git+https://github.com/pinkroosterai/typemill-mcp.git", "typemill-mcp"],
+  "env": {
+    "TYPEMILL_BASE_URL": "https://your-typemill-site.com",
+    "TYPEMILL_USERNAME": "your_api_username",
+    "TYPEMILL_PASSWORD": "your_api_password"
+  }
+}'
 ```
 
 If you prefer a permanent install, use `pipx`:
@@ -66,21 +76,30 @@ If you prefer a permanent install, use `pipx`:
 pipx install /path/to/typemill-mcp        # from local source
 pipx install git+https://github.com/pinkroosterai/typemill-mcp.git  # from git
 
-claude mcp add --transport stdio \
-  -e TYPEMILL_BASE_URL=https://your-typemill-site.com \
-  -e TYPEMILL_USERNAME=your_api_username \
-  --env TYPEMILL_PASSWORD=your_api_password \
-  typemill -- typemill-mcp
+claude mcp add-json typemill '{
+  "type": "stdio",
+  "command": "typemill-mcp",
+  "env": {
+    "TYPEMILL_BASE_URL": "https://your-typemill-site.com",
+    "TYPEMILL_USERNAME": "your_api_username",
+    "TYPEMILL_PASSWORD": "your_api_password"
+  }
+}'
 ```
 
 Use `--scope user` to make it available across all projects, or `--scope project` to share via `.mcp.json`:
 
 ```bash
-claude mcp add --scope user --transport stdio \
-  -e TYPEMILL_BASE_URL=https://your-typemill-site.com \
-  -e TYPEMILL_USERNAME=your_api_username \
-  --env TYPEMILL_PASSWORD=your_api_password \
-  typemill -- uv run --directory /path/to/typemill-mcp typemill-mcp
+claude mcp add-json typemill --scope user '{
+  "type": "stdio",
+  "command": "uv",
+  "args": ["run", "--directory", "/path/to/typemill-mcp", "typemill-mcp"],
+  "env": {
+    "TYPEMILL_BASE_URL": "https://your-typemill-site.com",
+    "TYPEMILL_USERNAME": "your_api_username",
+    "TYPEMILL_PASSWORD": "your_api_password"
+  }
+}'
 ```
 
 Verify it's running:
