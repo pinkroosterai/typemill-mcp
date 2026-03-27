@@ -130,8 +130,16 @@ Starts an HTTP+SSE server on port 8000.
 
 ## Development
 
-Run tests:
+Run unit tests (mocked, no Docker needed):
 
 ```bash
-pytest tests/ -v
+pytest tests/ -v --ignore=tests/test_integration.py
 ```
+
+Run integration tests (requires Docker):
+
+```bash
+pytest -m integration -v
+```
+
+Integration tests spin up a real Typemill instance in Docker using [testcontainers](https://testcontainers.com/), pre-seeded with an admin user. They validate all client methods against the live API and clean up automatically. The Docker image (`kixote/typemill`) is pulled on first run.

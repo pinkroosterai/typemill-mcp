@@ -1,0 +1,26 @@
+setup: true
+welcome: false
+language: en
+langattr: en
+title: "Typemill Test"
+author: "Test Admin"
+copyright: "2026"
+editor: visual
+formats:
+  - markdown
+  - headline
+  - ulist
+  - olist
+  - table
+  - quote
+  - notice
+  - image
+  - video
+  - file
+  - code
+  - math
+  - definition
+  - shortcode
+images:
+  live:
+    width: 820

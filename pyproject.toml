@@ -22,6 +22,8 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "respx>=0.21.0",
+    "testcontainers>=4.0.0",
+    "bcrypt>=4.0.0",
 ]
 
 [project.scripts]
@@ -33,3 +35,6 @@ packages = ["src/typemill_mcp"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "integration: end-to-end tests requiring Docker",
+]

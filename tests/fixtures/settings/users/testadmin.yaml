@@ -1,0 +1,11 @@
+username: testadmin
+email: testadmin@test.com
+userrole: administrator
+password: '$2b$12$jx0t1Esq.J9s3mdIc06FvuRpl8CD9BUjb6KhJbBmVwvTcG8/s6V9.'
+lastlogin: 1700000000
+firstname: Test
+lastname: Admin
+description: ''
+image: ''
+apiaccess: true
+darkmode: false
