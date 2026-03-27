@@ -44,7 +44,7 @@ async def test_delete_block(client):
 @respx.mock
 @pytest.mark.asyncio
 async def test_move_block(client):
-    respx.put("https://example.com/api/v1/moveblock").mock(
+    respx.put("https://example.com/api/v1/block/move").mock(
         return_value=httpx.Response(200, json={"success": True})
     )
     result = await client.move_block("/getting-started", 2, 5)

@@ -74,7 +74,7 @@ async def test_rename_page(client):
     respx.post("https://example.com/api/v1/article/rename").mock(
         return_value=httpx.Response(200, json={"success": True})
     )
-    result = await client.rename_article("/docs/old-name", "new-name")
+    result = await client.rename_article("/docs/old-name", "0", "new-name")
     assert result["success"] is True
 
 

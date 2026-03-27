@@ -13,10 +13,15 @@ class Settings(BaseSettings):
 
 class TypemillClient:
     def __init__(self, base_url: str, username: str, password: str) -> None:
-        self.api_url = f"{base_url.rstrip('/')}/api/v1"
+        self._base_url = base_url.rstrip("/")
+        self.api_url = f"{self._base_url}/api/v1"
         self._client = httpx.AsyncClient(
             auth=httpx.BasicAuth(username, password),
-            headers={"Accept": "application/json"},
+            headers={
+                "Accept": "application/json",
+                # Referer required by Typemill's SecurityMiddleware for POST/PUT/DELETE
+                "Referer": self._base_url + "/",
+            },
             timeout=30.0,
         )
 
@@ -39,46 +44,77 @@ class TypemillClient:
         params = {"draft": "true"} if draft else {}
         return await self._request("GET", "/navigation", params=params)
 
-    # ── Articles ──
+    # ── Articles (read — external API) ──
 
-    async def get_article_markdown(self, url: str) -> dict:
-        return await self._request("POST", "/article/markdown", json={"url": url})
+    async def get_article_content(self, url: str) -> dict:
+        """GET /article/content — returns markdown blocks with id, markdown, html."""
+        return await self._request("GET", "/article/content", params={"url": url})
 
-    async def create_article(self, url: str, title: str, content: str) -> dict:
+    async def get_article_meta(self, url: str) -> dict:
+        """GET /article/meta — returns page metadata (navtitle, title, description, etc.)."""
+        return await self._request("GET", "/article/meta", params={"url": url})
+
+    async def get_article_item(self, url: str) -> dict:
+        """GET /article/item — returns navigation item details for a URL."""
+        return await self._request("GET", "/article/item", params={"url": url})
+
+    # ── Articles (write — author API) ──
+
+    async def create_article(self, folder_id: str, item_name: str, item_type: str = "file") -> dict:
+        """POST /article — create a new page. folder_id is 'root' or a key path like '0'."""
         return await self._request(
             "POST", "/article",
-            json={"url": url, "title": title, "content": content},
+            json={"folder_id": folder_id, "item_name": item_name, "type": item_type},
         )
 
-    async def update_article(self, url: str, content: str) -> dict:
+    async def update_draft(self, url: str, item_id: str, title: str, body: str) -> dict:
+        """PUT /draft — update a page's draft content. body is JSON array of blocks."""
         return await self._request(
-            "PUT", "/article",
-            json={"url": url, "content": content},
+            "PUT", "/draft",
+            json={"url": url, "item_id": item_id, "title": title, "body": body},
         )
 
-    async def delete_article(self, url: str) -> dict:
-        return await self._request("DELETE", "/article", json={"url": url})
+    async def delete_article(self, url: str, item_id: str) -> dict:
+        """DELETE /article — delete a page."""
+        return await self._request(
+            "DELETE", "/article",
+            json={"url": url, "item_id": item_id},
+        )
 
-    async def publish_article(self, url: str) -> dict:
-        return await self._request("POST", "/article/publish", json={"url": url})
+    async def publish_article(self, url: str, item_id: str) -> dict:
+        """POST /article/publish — publish a draft page."""
+        return await self._request(
+            "POST", "/article/publish",
+            json={"url": url, "item_id": item_id},
+        )
 
-    async def unpublish_article(self, url: str) -> dict:
-        return await self._request("DELETE", "/article/unpublish", json={"url": url})
+    async def unpublish_article(self, url: str, item_id: str) -> dict:
+        """DELETE /article/unpublish — revert a published page to draft."""
+        return await self._request(
+            "DELETE", "/article/unpublish",
+            json={"url": url, "item_id": item_id},
+        )
 
-    async def rename_article(self, url: str, new_name: str) -> dict:
+    async def discard_article(self, url: str, item_id: str) -> dict:
+        """DELETE /article/discard — discard unpublished changes."""
+        return await self._request(
+            "DELETE", "/article/discard",
+            json={"url": url, "item_id": item_id},
+        )
+
+    async def rename_article(self, url: str, item_id: str, new_name: str) -> dict:
+        """POST /article/rename — rename a page."""
         return await self._request(
             "POST", "/article/rename",
-            json={"url": url, "new_name": new_name},
+            json={"url": url, "item_id": item_id, "item_name": new_name},
         )
 
     async def sort_article(self, url: str, item_id: str, parent_id: str, position: int) -> dict:
+        """POST /article/sort — move a page to a new position."""
         return await self._request(
             "POST", "/article/sort",
             json={"url": url, "item_id": item_id, "parent_id": parent_id, "position": position},
         )
-
-    async def discard_article(self, url: str) -> dict:
-        return await self._request("DELETE", "/article/discard", json={"url": url})
 
     # ── Blocks ──
 
@@ -102,28 +138,27 @@ class TypemillClient:
 
     async def move_block(self, url: str, block_id: int, new_position: int) -> dict:
         return await self._request(
-            "PUT", "/moveblock",
+            "PUT", "/block/move",
             json={"url": url, "block_id": block_id, "new_position": new_position},
         )
 
     # ── Metadata ──
 
-    async def get_article_metadata(self, url: str) -> dict:
-        return await self._request("GET", "/article/metadata", params={"url": url})
+    async def get_metadata(self, url: str) -> dict:
+        """GET /meta — returns full metadata for a page."""
+        return await self._request("GET", "/meta", params={"url": url})
 
-    async def update_article_metadata(self, url: str, metadata: dict) -> dict:
+    async def update_metadata(self, url: str, metadata: dict, tab: str = "meta") -> dict:
+        """POST /meta — update page metadata. tab is the metadata tab name (default 'meta')."""
         return await self._request(
-            "POST", "/article/metadata",
-            json={"url": url, **metadata},
+            "POST", "/meta",
+            json={"url": url, "tab": tab, "data": metadata},
         )
-
-    async def get_meta_definitions(self) -> dict:
-        return await self._request("GET", "/metadefinitions")
 
     # ── Media: Images ──
 
     async def browse_images(self) -> dict:
-        return await self._request("GET", "/medialib/images")
+        return await self._request("GET", "/images")
 
     async def get_image(self, name: str) -> dict:
         return await self._request("GET", "/image", params={"name": name})
@@ -140,7 +175,7 @@ class TypemillClient:
     # ── Media: Files ──
 
     async def browse_files(self) -> dict:
-        return await self._request("GET", "/medialib/files")
+        return await self._request("GET", "/files")
 
     async def get_file(self, name: str) -> dict:
         return await self._request("GET", "/file", params={"name": name})

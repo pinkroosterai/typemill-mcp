@@ -12,8 +12,8 @@ def client():
 
 @respx.mock
 @pytest.mark.asyncio
-async def test_get_article_markdown(client):
-    respx.post("https://example.com/api/v1/article/markdown").mock(
+async def test_get_article_content(client):
+    respx.get("https://example.com/api/v1/article/content").mock(
         return_value=httpx.Response(
             200,
             json={
@@ -23,58 +23,58 @@ async def test_get_article_markdown(client):
             },
         )
     )
-    result = await client.get_article_markdown("/getting-started")
+    result = await client.get_article_content("/getting-started")
     assert result["content"][0]["markdown"] == "# Hello"
 
 
 @respx.mock
 @pytest.mark.asyncio
-async def test_get_article_metadata(client):
-    respx.get("https://example.com/api/v1/article/metadata").mock(
+async def test_get_article_meta(client):
+    respx.get("https://example.com/api/v1/article/meta").mock(
         return_value=httpx.Response(
             200,
-            json={"metadata": {"meta": {"title": "Test Page"}}},
+            json={"meta": {"meta": {"title": "Test Page"}}},
         )
     )
-    result = await client.get_article_metadata("/getting-started")
-    assert result["metadata"]["meta"]["title"] == "Test Page"
+    result = await client.get_article_meta("/getting-started")
+    assert result["meta"]["meta"]["title"] == "Test Page"
 
 
 @respx.mock
 @pytest.mark.asyncio
 async def test_create_article(client):
     respx.post("https://example.com/api/v1/article").mock(
-        return_value=httpx.Response(200, json={"success": True})
+        return_value=httpx.Response(200, json={"navigation": []})
     )
-    result = await client.create_article("/docs/new", "New Page", "# Content")
-    assert result["success"] is True
+    result = await client.create_article("root", "new-page")
+    assert "navigation" in result
 
 
 @respx.mock
 @pytest.mark.asyncio
-async def test_update_article(client):
-    respx.put("https://example.com/api/v1/article").mock(
-        return_value=httpx.Response(200, json={"success": True})
+async def test_update_draft(client):
+    respx.put("https://example.com/api/v1/draft").mock(
+        return_value=httpx.Response(200, json={"item": {}})
     )
-    result = await client.update_article("/docs/test", "# Updated")
-    assert result["success"] is True
+    result = await client.update_draft("/test", "0", "Title", '[{"id":0,"markdown":"# Hi"}]')
+    assert "item" in result
 
 
 @respx.mock
 @pytest.mark.asyncio
 async def test_delete_article(client):
     respx.delete("https://example.com/api/v1/article").mock(
-        return_value=httpx.Response(200, json={"success": True})
+        return_value=httpx.Response(200, json={"url": "/tm/content"})
     )
-    result = await client.delete_article("/docs/test")
-    assert result["success"] is True
+    result = await client.delete_article("/test", "0")
+    assert result is not None
 
 
 @respx.mock
 @pytest.mark.asyncio
 async def test_api_error_raises(client):
-    respx.post("https://example.com/api/v1/article/markdown").mock(
+    respx.get("https://example.com/api/v1/article/content").mock(
         return_value=httpx.Response(404, text="Not found")
     )
     with pytest.raises(RuntimeError, match="404"):
-        await client.get_article_markdown("/missing")
+        await client.get_article_content("/missing")

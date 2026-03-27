@@ -1,4 +1,4 @@
-setup: true
+setup: false
 welcome: false
 language: en
 langattr: en

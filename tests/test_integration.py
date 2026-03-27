@@ -5,6 +5,7 @@ Run with: pytest -m integration -v
 Requires: Docker daemon running, kixote/typemill image available.
 """
 
+import json
 import pytest
 
 pytestmark = pytest.mark.integration
@@ -19,172 +20,127 @@ async def test_01_get_navigation(typemill_client):
     result = await typemill_client.get_navigation(draft=True)
     assert "navigation" in result
     assert isinstance(result["navigation"], list)
+    assert len(result["navigation"]) > 0
 
 
 @pytest.mark.asyncio
-async def test_02_create_article(typemill_client):
-    """Create a test page that subsequent tests will operate on."""
-    result = await typemill_client.create_article(
-        url="/test-integration-page",
-        title="Integration Test Page",
-        content="# Integration Test\n\nThis is a test page.",
-    )
-    _state["page_url"] = "/test-integration-page"
-    assert result is not None
-
-
-@pytest.mark.asyncio
-async def test_03_get_article_markdown(typemill_client):
-    """Retrieve the created page's markdown content."""
-    url = _state.get("page_url", "/test-integration-page")
-    result = await typemill_client.get_article_markdown(url)
+async def test_02_get_article_content(typemill_client):
+    """Get content of an existing page."""
+    result = await typemill_client.get_article_content("/getting-started")
     assert "content" in result
     assert isinstance(result["content"], list)
+    assert len(result["content"]) > 0
+    assert "markdown" in result["content"][0]
 
 
 @pytest.mark.asyncio
-async def test_04_get_article_metadata(typemill_client):
-    """Retrieve the created page's metadata."""
-    url = _state.get("page_url", "/test-integration-page")
-    result = await typemill_client.get_article_metadata(url)
-    assert "metadata" in result or "meta" in str(result).lower()
+async def test_03_get_article_meta(typemill_client):
+    """Get metadata of an existing page."""
+    result = await typemill_client.get_article_meta("/getting-started")
+    assert "meta" in result
+    assert "meta" in result["meta"]
+    assert "title" in result["meta"]["meta"]
 
 
 @pytest.mark.asyncio
-async def test_05_update_article(typemill_client):
-    """Update the page's content."""
-    url = _state.get("page_url", "/test-integration-page")
-    result = await typemill_client.update_article(
+async def test_04_get_article_item(typemill_client):
+    """Get navigation item details for a URL."""
+    result = await typemill_client.get_article_item("/getting-started")
+    assert "item" in result
+    assert result["item"]["slug"] == "getting-started"
+
+
+@pytest.mark.asyncio
+async def test_05_create_article(typemill_client):
+    """Create a test page at the root level."""
+    result = await typemill_client.create_article(
+        folder_id="root",
+        item_name="integration-test-page",
+    )
+    assert "navigation" in result
+    # Find our page in the navigation to get its item_id
+    nav = result["navigation"]
+    for i, item in enumerate(nav):
+        if item.get("slug") == "integration-test-page":
+            _state["page_url"] = item["urlRel"]
+            _state["item_id"] = str(item["key"])
+            _state["item_key_path"] = item["keyPath"]
+            break
+    assert "page_url" in _state, "Created page not found in navigation"
+
+
+@pytest.mark.asyncio
+async def test_06_update_draft(typemill_client):
+    """Update the draft content of the created page."""
+    url = _state["page_url"]
+    item_id = _state["item_key_path"]
+    body = json.dumps([{"id": 0, "markdown": "# Integration Test Page\n\nThis is test content."}])
+    result = await typemill_client.update_draft(
         url=url,
-        content="# Updated Integration Test\n\nContent has been updated.",
+        item_id=item_id,
+        title="Integration Test Page",
+        body=body,
     )
     assert result is not None
 
 
 @pytest.mark.asyncio
-async def test_06_add_block(typemill_client):
-    """Add a new content block to the page."""
-    url = _state.get("page_url", "/test-integration-page")
-    result = await typemill_client.add_block(
+async def test_07_publish(typemill_client):
+    """Publish the test page."""
+    url = _state["page_url"]
+    item_id = _state["item_key_path"]
+    result = await typemill_client.publish_article(url, item_id)
+    assert "navigation" in result
+
+
+@pytest.mark.asyncio
+async def test_08_get_metadata(typemill_client):
+    """Get metadata via the /meta endpoint."""
+    url = _state["page_url"]
+    result = await typemill_client.get_metadata(url)
+    assert "metadata" in result
+
+
+@pytest.mark.asyncio
+async def test_09_update_metadata(typemill_client):
+    """Update page metadata."""
+    url = _state["page_url"]
+    result = await typemill_client.update_metadata(
         url=url,
-        block_id=1,
-        content="## New Block\n\nAdded via integration test.",
+        metadata={"description": "Integration test description"},
     )
     assert result is not None
 
 
 @pytest.mark.asyncio
-async def test_07_update_block(typemill_client):
-    """Update the block we just added."""
-    url = _state.get("page_url", "/test-integration-page")
-    result = await typemill_client.update_block(
-        url=url,
-        block_id=1,
-        content="## Updated Block\n\nModified via integration test.",
-    )
-    assert result is not None
+async def test_10_unpublish(typemill_client):
+    """Unpublish the test page."""
+    url = _state["page_url"]
+    item_id = _state["item_key_path"]
+    result = await typemill_client.unpublish_article(url, item_id)
+    assert "navigation" in result
 
 
 @pytest.mark.asyncio
-async def test_08_move_block(typemill_client):
-    """Move a block to a different position."""
-    url = _state.get("page_url", "/test-integration-page")
-    try:
-        result = await typemill_client.move_block(
-            url=url,
-            block_id=1,
-            new_position=0,
-        )
-        assert result is not None
-    except RuntimeError:
-        pytest.skip("move_block not supported by this Typemill version")
-
-
-@pytest.mark.asyncio
-async def test_09_delete_block(typemill_client):
-    """Delete the block we've been working with."""
-    url = _state.get("page_url", "/test-integration-page")
-    result = await typemill_client.delete_block(
-        url=url,
-        block_id=1,
-    )
-    assert result is not None
-
-
-@pytest.mark.asyncio
-async def test_10_update_metadata(typemill_client):
-    """Update the page's metadata."""
-    url = _state.get("page_url", "/test-integration-page")
-    result = await typemill_client.update_article_metadata(
-        url=url,
-        metadata={"description": "Integration test page description"},
-    )
-    assert result is not None
-
-
-@pytest.mark.asyncio
-async def test_11_publish(typemill_client):
-    """Publish the page."""
-    url = _state.get("page_url", "/test-integration-page")
-    result = await typemill_client.publish_article(url)
-    assert result is not None
-
-
-@pytest.mark.asyncio
-async def test_12_unpublish(typemill_client):
-    """Unpublish the page."""
-    url = _state.get("page_url", "/test-integration-page")
-    result = await typemill_client.unpublish_article(url)
-    assert result is not None
-
-
-@pytest.mark.asyncio
-async def test_13_discard(typemill_client):
-    """Discard unpublished changes."""
-    url = _state.get("page_url", "/test-integration-page")
-    try:
-        result = await typemill_client.discard_article(url)
-        assert result is not None
-    except RuntimeError:
-        pytest.skip("discard may fail if no unpublished changes exist")
-
-
-@pytest.mark.asyncio
-async def test_14_get_meta_definitions(typemill_client):
-    """Retrieve meta field definitions."""
-    result = await typemill_client.get_meta_definitions()
-    assert result is not None
-
-
-@pytest.mark.asyncio
-async def test_15_browse_images(typemill_client):
-    """Browse the media library for images."""
+async def test_11_browse_images(typemill_client):
+    """Browse the image library."""
     result = await typemill_client.browse_images()
-    assert result is not None
+    assert "images" in result
+    assert isinstance(result["images"], list)
 
 
 @pytest.mark.asyncio
-async def test_16_browse_files(typemill_client):
-    """Browse the media library for files."""
+async def test_12_browse_files(typemill_client):
+    """Browse the file library."""
     result = await typemill_client.browse_files()
-    assert result is not None
+    assert "files" in result
+    assert isinstance(result["files"], list)
 
 
 @pytest.mark.asyncio
-async def test_17_rename_article(typemill_client):
-    """Rename the test page."""
-    url = _state.get("page_url", "/test-integration-page")
-    try:
-        result = await typemill_client.rename_article(url, "renamed-integration-page")
-        _state["page_url"] = "/renamed-integration-page"
-        assert result is not None
-    except RuntimeError:
-        pytest.skip("rename may require specific page state")
-
-
-@pytest.mark.asyncio
-async def test_18_delete_article(typemill_client):
+async def test_13_delete_article(typemill_client):
     """Delete the test page — cleanup."""
-    url = _state.get("page_url", "/test-integration-page")
-    result = await typemill_client.delete_article(url)
+    url = _state["page_url"]
+    item_id = _state["item_key_path"]
+    result = await typemill_client.delete_article(url, item_id)
     assert result is not None

@@ -13,23 +13,23 @@ def client():
 @respx.mock
 @pytest.mark.asyncio
 async def test_browse_images(client):
-    respx.get("https://example.com/api/v1/medialib/images").mock(
+    respx.get("https://example.com/api/v1/images").mock(
         return_value=httpx.Response(
-            200, json={"images": ["photo.jpg", "diagram.png"]}
+            200, json={"images": [{"name": "photo.jpg"}]}
         )
     )
     result = await client.browse_images()
-    assert "photo.jpg" in result["images"]
+    assert result["images"][0]["name"] == "photo.jpg"
 
 
 @respx.mock
 @pytest.mark.asyncio
 async def test_browse_files(client):
-    respx.get("https://example.com/api/v1/medialib/files").mock(
-        return_value=httpx.Response(200, json={"files": ["readme.pdf"]})
+    respx.get("https://example.com/api/v1/files").mock(
+        return_value=httpx.Response(200, json={"files": [{"name": "readme.pdf"}]})
     )
     result = await client.browse_files()
-    assert "readme.pdf" in result["files"]
+    assert result["files"][0]["name"] == "readme.pdf"
 
 
 @respx.mock

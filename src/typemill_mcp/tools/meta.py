@@ -9,7 +9,7 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
     @mcp.tool()
     async def get_meta(url_path: str) -> str:
         """Retrieve the metadata (title, description, published status, etc.) of a Typemill page by its URL path."""
-        result = await client.get_article_metadata(url_path)
+        result = await client.get_metadata(url_path)
         return json.dumps(result, indent=2)
 
     @mcp.tool()
@@ -29,5 +29,5 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
             meta["noindex"] = noindex
         if not meta:
             return "No metadata values provided to update."
-        result = await client.update_article_metadata(url_path, meta)
+        result = await client.update_metadata(url_path, meta)
         return json.dumps(result, indent=2)

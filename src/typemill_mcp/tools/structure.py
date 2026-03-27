@@ -15,6 +15,8 @@ def _format_tree(items: list[dict[str, Any]], indent: int = 0) -> str:
         url = item.get("urlRel", "")
         lines.append(f"{prefix}{marker} {name}  {url}")
         children = item.get("folderContent", [])
+        if isinstance(children, dict):
+            children = list(children.values())
         if children:
             lines.append(_format_tree(children, indent + 1))
     return "\n".join(lines)
@@ -31,9 +33,9 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
         return _format_tree(items)
 
     @mcp.tool()
-    async def rename_page(url_path: str, new_name: str) -> str:
-        """Rename a Typemill page, changing its title and URL slug. url_path is the current relative URL, new_name is the desired new name."""
-        result = await client.rename_article(url_path, new_name)
+    async def rename_page(url_path: str, item_id: str, new_name: str) -> str:
+        """Rename a Typemill page, changing its title and URL slug. url_path is the current relative URL, item_id is from the navigation tree, new_name is the desired new name."""
+        result = await client.rename_article(url_path, item_id, new_name)
         return json.dumps(result, indent=2)
 
     @mcp.tool()
