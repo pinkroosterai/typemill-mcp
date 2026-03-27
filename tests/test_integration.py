@@ -74,12 +74,11 @@ async def test_06_update_draft(typemill_client):
     """Update the draft content of the created page."""
     url = _state["page_url"]
     item_id = _state["item_key_path"]
-    body = json.dumps([{"id": 0, "markdown": "# Integration Test Page\n\nThis is test content."}])
     result = await typemill_client.update_draft(
         url=url,
         item_id=item_id,
-        title="Integration Test Page",
-        body=body,
+        title="# Integration Test Page",
+        body="This is test content.",
     )
     assert result is not None
 

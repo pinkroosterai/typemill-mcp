@@ -68,7 +68,7 @@ class TypemillClient:
         )
 
     async def update_draft(self, url: str, item_id: str, title: str, body: str) -> dict:
-        """PUT /draft — update a page's draft content. body is JSON array of blocks."""
+        """PUT /draft — update a page's draft content. title is the H1 markdown (e.g. '# My Page'). body is raw markdown for the rest of the page."""
         return await self._request(
             "PUT", "/draft",
             json={"url": url, "item_id": item_id, "title": title, "body": body},
@@ -104,9 +104,10 @@ class TypemillClient:
 
     async def rename_article(self, url: str, item_id: str, new_name: str) -> dict:
         """POST /article/rename — rename a page."""
+        old_slug = url.rstrip("/").rsplit("/", 1)[-1]
         return await self._request(
             "POST", "/article/rename",
-            json={"url": url, "item_id": item_id, "item_name": new_name},
+            json={"url": url, "item_id": item_id, "slug": new_name, "oldslug": old_slug},
         )
 
     async def sort_article(self, url: str, item_id: str, parent_id: str, position: int) -> dict:
@@ -121,13 +122,13 @@ class TypemillClient:
     async def add_block(self, url: str, block_id: int, content: str) -> dict:
         return await self._request(
             "POST", "/block",
-            json={"url": url, "block_id": block_id, "content": content},
+            json={"url": url, "block_id": block_id, "markdown": content},
         )
 
     async def update_block(self, url: str, block_id: int, content: str) -> dict:
         return await self._request(
             "PUT", "/block",
-            json={"url": url, "block_id": block_id, "content": content},
+            json={"url": url, "block_id": block_id, "markdown": content},
         )
 
     async def delete_block(self, url: str, block_id: int) -> dict:
@@ -139,7 +140,7 @@ class TypemillClient:
     async def move_block(self, url: str, block_id: int, new_position: int) -> dict:
         return await self._request(
             "PUT", "/block/move",
-            json={"url": url, "block_id": block_id, "new_position": new_position},
+            json={"url": url, "index_old": block_id, "index_new": new_position},
         )
 
     # ── Metadata ──
@@ -164,7 +165,7 @@ class TypemillClient:
         return await self._request("GET", "/image", params={"name": name})
 
     async def upload_image(self, file: str, name: str) -> dict:
-        return await self._request("POST", "/image", json={"file": file, "name": name})
+        return await self._request("POST", "/image", json={"image": file, "name": name})
 
     async def publish_image(self, name: str) -> dict:
         return await self._request("PUT", "/image", json={"name": name})

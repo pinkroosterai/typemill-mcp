@@ -56,7 +56,7 @@ async def test_update_draft(client):
     respx.put("https://example.com/api/v1/draft").mock(
         return_value=httpx.Response(200, json={"item": {}})
     )
-    result = await client.update_draft("/test", "0", "Title", '[{"id":0,"markdown":"# Hi"}]')
+    result = await client.update_draft("/test", "0", "# Title", "Some paragraph content.")
     assert "item" in result
 
 

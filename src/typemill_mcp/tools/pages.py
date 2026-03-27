@@ -1,8 +1,14 @@
 import asyncio
 import json
 
+from pydantic import BaseModel, Field
 from mcp.server.fastmcp import FastMCP
 from typemill_mcp.client import TypemillClient
+
+
+class ContentBlock(BaseModel):
+    """A single content block on a Typemill page."""
+    markdown: str = Field(description="The markdown text for this block, e.g. '# Hello World' or 'A paragraph of text.'")
 
 
 def register(mcp: FastMCP, client: TypemillClient) -> None:
@@ -35,6 +41,14 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
     async def create_page(folder_id: str, item_name: str, item_type: str = "file") -> str:
         """Create a new page in Typemill. folder_id is 'root' for top-level or a key path like '0' for the first folder. item_name is the page slug (e.g. 'my-new-page'). item_type is 'file' for a page or 'folder' for a section."""
         result = await client.create_article(folder_id, item_name, item_type)
+        return json.dumps(result, indent=2)
+
+    @mcp.tool()
+    async def update_page(url_path: str, item_id: str, title: str, blocks: list[ContentBlock]) -> str:
+        """Replace the full draft content of a Typemill page. Use this to set initial content on newly created (empty) pages, or to replace all content at once. title is the page heading (without '# ' — it is added automatically). Each block is a separate content element (paragraph, list, code block, etc.). Do NOT include the title as a block."""
+        heading = "# " + title
+        body = "\n\n".join(b.markdown for b in blocks)
+        result = await client.update_draft(url_path, item_id, heading, body)
         return json.dumps(result, indent=2)
 
     @mcp.tool()
