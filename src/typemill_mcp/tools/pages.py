@@ -4,7 +4,7 @@ import json
 from pydantic import BaseModel, Field
 from mcp.server.fastmcp import FastMCP
 from typemill_mcp.client import TypemillClient
-from typemill_mcp.tools.types import ItemId, UrlPath
+from typemill_mcp.tools.types import ItemId, UrlPath, compact_response
 
 
 class ContentBlock(BaseModel):
@@ -59,10 +59,10 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
         heading = "# " + title
         body = "\n\n".join(b.markdown for b in blocks)
         result = await client.update_draft(url_path, item_id, heading, body)
-        return json.dumps(result, indent=2)
+        return compact_response(result)
 
     @mcp.tool()
     async def delete_page(url_path: UrlPath, item_id: ItemId) -> str:
         """Permanently delete a page and its content. This action is irreversible."""
         result = await client.delete_article(url_path, item_id)
-        return json.dumps(result, indent=2)
+        return compact_response(result)

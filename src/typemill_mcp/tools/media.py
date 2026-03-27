@@ -7,6 +7,7 @@ from typing import Annotated, Literal, Optional
 from pydantic import Field
 from mcp.server.fastmcp import FastMCP
 from typemill_mcp.client import TypemillClient
+from typemill_mcp.tools.types import compact_response
 
 ACTIONS_NEEDING_NAME = {
     "get_image", "get_file",
@@ -70,4 +71,4 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
         }
 
         result = await dispatch[action]()
-        return json.dumps(result, indent=2)
+        return compact_response(result)

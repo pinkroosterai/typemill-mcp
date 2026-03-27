@@ -4,7 +4,7 @@ from typing import Annotated, Any
 from pydantic import Field
 from mcp.server.fastmcp import FastMCP
 from typemill_mcp.client import TypemillClient
-from typemill_mcp.tools.types import ItemId, UrlPath
+from typemill_mcp.tools.types import ItemId, UrlPath, compact_response
 
 
 def _format_tree(items: list[dict[str, Any]], indent: int = 0) -> str:
@@ -43,7 +43,7 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
     ) -> str:
         """Rename a page, changing its URL slug and navigation title. Creates a draft change — publish to make it live."""
         result = await client.rename_article(url_path, item_id, new_name)
-        return json.dumps(result, indent=2)
+        return compact_response(result)
 
     @mcp.tool()
     async def sort_page(
@@ -54,4 +54,4 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
     ) -> str:
         """Move a page to a new position in the navigation tree."""
         result = await client.sort_article(url_path, item_id, parent_id, position)
-        return json.dumps(result, indent=2)
+        return compact_response(result)

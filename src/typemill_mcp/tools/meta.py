@@ -4,7 +4,7 @@ from typing import Annotated, Optional
 from pydantic import Field
 from mcp.server.fastmcp import FastMCP
 from typemill_mcp.client import TypemillClient
-from typemill_mcp.tools.types import UrlPath
+from typemill_mcp.tools.types import UrlPath, compact_response
 
 
 def register(mcp: FastMCP, client: TypemillClient) -> None:
@@ -12,7 +12,7 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
     async def get_meta(url_path: UrlPath) -> str:
         """Get page metadata including title, description, author, dates, and visibility settings."""
         result = await client.get_metadata(url_path)
-        return json.dumps(result, indent=2)
+        return compact_response(result)
 
     @mcp.tool()
     async def update_meta(
@@ -32,4 +32,4 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
         if not meta:
             return "No metadata values provided to update."
         result = await client.update_metadata(url_path, meta)
-        return json.dumps(result, indent=2)
+        return compact_response(result)
