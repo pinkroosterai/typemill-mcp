@@ -37,6 +37,18 @@ async def test_update_metadata(client):
 
 @respx.mock
 @pytest.mark.asyncio
+async def test_update_metadata_navtitle(client):
+    respx.post("https://example.com/api/v1/meta").mock(
+        return_value=httpx.Response(200, json={"success": True})
+    )
+    result = await client.update_metadata(
+        "/getting-started", {"navtitle": "New Nav Title"}
+    )
+    assert result["success"] is True
+
+
+@respx.mock
+@pytest.mark.asyncio
 async def test_metadata_auth_error(client):
     respx.get("https://example.com/api/v1/meta").mock(
         return_value=httpx.Response(401, text="Unauthorized")

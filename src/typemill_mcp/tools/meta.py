@@ -17,12 +17,15 @@ def register(mcp: FastMCP, client: TypemillClient) -> None:
     @mcp.tool()
     async def update_meta(
         url_path: UrlPath,
+        navtitle: Annotated[Optional[str], Field(description="Navigation title shown in the sidebar menu. Omit to leave unchanged.")] = None,
         title: Annotated[Optional[str], Field(description="Meta title for SEO and browser tab. Omit to leave unchanged.")] = None,
         description: Annotated[Optional[str], Field(description="Meta description for SEO. Omit to leave unchanged.")] = None,
         noindex: Annotated[Optional[bool], Field(description="If true, adds noindex tag and excludes from sitemap. Omit to leave unchanged.")] = None,
     ) -> str:
         """Update metadata fields on a page. Only provided fields are changed — omit a field to keep its current value."""
         meta: dict = {}
+        if navtitle is not None:
+            meta["navtitle"] = navtitle
         if title is not None:
             meta["title"] = title
         if description is not None:
