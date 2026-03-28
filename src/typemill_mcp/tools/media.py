@@ -1,5 +1,4 @@
 import base64
-import json
 import mimetypes
 from pathlib import Path
 from typing import Annotated, Literal, Optional

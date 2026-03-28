@@ -1,4 +1,3 @@
-import json
 
 from mcp.server.fastmcp import FastMCP
 from typemill_mcp.client import TypemillClient

@@ -5,7 +5,6 @@ Run with: pytest -m integration -v
 Requires: Docker daemon running, kixote/typemill image available.
 """
 
-import json
 import pytest
 
 pytestmark = pytest.mark.integration
